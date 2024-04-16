@@ -1,6 +1,7 @@
 package ru.boyurig.buysell.controllers;
 
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -17,6 +18,7 @@ import java.io.ByteArrayInputStream;
 @RequiredArgsConstructor
 public class ImageController {
     private final ImageRepository imageRepository;
+
 
 
     @GetMapping("/images/{id}")

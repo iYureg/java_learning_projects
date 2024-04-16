@@ -1,5 +1,6 @@
 package ru.boyurig.buysell.services;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,8 +10,8 @@ import ru.boyurig.buysell.models.Product;
 import ru.boyurig.buysell.repositories.ProductRepository;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -20,7 +21,7 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     public List<Product> getAllProducts(String title) {
-        if(title != null) return productRepository.findByTitle(title);
+        if (title != null) return productRepository.findByTitle(title);
         return productRepository.findAll();
     }
 
@@ -28,16 +29,16 @@ public class ProductService {
         Image image1;
         Image image2;
         Image image3;
-        if(file1.getSize() != 0){
+        if (file1.getSize() != 0) {
             image1 = toImageEntity(file1);
             image1.setPreviewImage(true);
             product.addImageToProduct(image1);
         }
-        if(file2.getSize() != 0){
+        if (file2.getSize() != 0) {
             image2 = toImageEntity(file2);
             product.addImageToProduct(image2);
         }
-        if(file3.getSize() != 0){
+        if (file3.getSize() != 0) {
             image3 = toImageEntity(file3);
             product.addImageToProduct(image3);
         }
@@ -61,7 +62,8 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+
     public Product getProductById(Long id) {
-            return productRepository.findById(id).orElse(null);
+        return productRepository.findById(id).orElse(null);
     }
 }
