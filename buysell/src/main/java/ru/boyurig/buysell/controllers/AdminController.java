@@ -9,6 +9,7 @@ import ru.boyurig.buysell.models.User;
 import ru.boyurig.buysell.models.enums.Role;
 import ru.boyurig.buysell.services.UserService;
 
+import java.security.Principal;
 import java.util.Map;
 
 @Controller
@@ -19,9 +20,9 @@ public class AdminController {
     private final UserService userService;
 
     @GetMapping("/admin")
-    public String admin(Model model) {
-
+    public String admin(Model model, Principal principal) {
         model.addAttribute("users", userService.getUsers());
+        model.addAttribute("user", userService.getUserByPrincipal(principal));
         return "admin";
     }
 
@@ -33,8 +34,9 @@ public class AdminController {
     }
 
     @GetMapping("/admin/user/edit/{user}")
-    public String userEdit(@PathVariable("user") User user, Model model) {
+    public String userEdit(@PathVariable("user") User user, Model model, Principal principal) {
         model.addAttribute("user", user);
+        model.addAttribute("user", userService.getUserByPrincipal(principal));
         model.addAttribute("roles", Role.values());
         return "user-edit";
     }

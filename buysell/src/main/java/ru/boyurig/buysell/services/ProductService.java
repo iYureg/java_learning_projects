@@ -1,6 +1,5 @@
 package ru.boyurig.buysell.services;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,6 @@ import ru.boyurig.buysell.repositories.UserRepository;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -54,7 +52,7 @@ public class ProductService {
     }
 
     public User getUserByPrincipal(Principal principal) {
-        if(principal == null) return new User();
+        if (principal == null) return new User();
         return userRepository.findByEmail(principal.getName());
     }
 
@@ -68,8 +66,18 @@ public class ProductService {
         return image;
     }
 
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+    public void deleteProduct(User user, Long id) {
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            if (product.getUser().getId().equals(user.getId())) {
+                productRepository.delete(product);
+                log.info("Deleted product with id: {}", id);
+            } else {
+                log.error("User: {} haven't product with id: {}", user.getEmail(), id);
+            }
+        } else {
+            log.error("Product with id: {} not found", id);
+        }
     }
 
 

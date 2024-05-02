@@ -6,7 +6,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import ru.boyurig.buysell.models.enums.Role;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -21,18 +20,21 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-    @Column(name = "email", unique = true)
+    @Column(name = "email", unique = true, updatable = false)
     private String email;
     @Column(name = "phone_number")
     private String phoneNumber;
     @Column(name = "name")
     private String name;
-    @Column(name = "active")
-    private boolean active;
+
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "image_id")
     private Image avatar;
+    @Column(name = "active")
+    private boolean active;
+    @Column(name = "activation_code")
+    private String activationCode;
 
     @Column(name = "password", length = 1000)
     private String password;
@@ -42,23 +44,21 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
     private List<Product> products;
 
-    @Column(name = "date_of_created")
-    private LocalDateTime dateOfCreated;
-
-    @PrePersist
-    private void init(){
-        dateOfCreated = LocalDateTime.now();
+    public void addProductToUser(Product product) {
+        product.setUser(this);
+        products.add(product);
     }
 
 
     // security
 
-    public boolean isAdmin(){
+    public boolean isAdmin() {
         return roles.contains(Role.ROLE_ADMIN);
     }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;

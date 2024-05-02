@@ -13,8 +13,6 @@ import java.util.List;
 @Entity
 @Table(name = "products")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
