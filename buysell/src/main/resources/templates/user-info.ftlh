@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>BUYSELL</title>
+    </head>
+
+    <body>
+        <h1>BUYSELL</h1>
+        <h3>Подробная информация о ползователе ${user.name}</h3>
+        <b>Номер телефона: </b> ${user.phoneNumber}<br>
+        <b>Email: </b> ${user.email}<br>
+        <h4>Товары пользователя ${user.name}</h4>
+        <#list products as product>
+
+            <div>
+                <p><b>${product.title}</b> : ${product.price} руб. <a href="/product/${product.id}">подробнее...</a></p>
+            </div>
+
+        <#else>
+            <h3>Товаров нет</h3>
+        </#list>
+        <#if errorMessage??>
+            <h2 style="color: red">${errorMessage}</h2>
+        </#if>
+    </body>
+</html>
