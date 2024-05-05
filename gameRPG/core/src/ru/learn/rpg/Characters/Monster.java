@@ -8,8 +8,7 @@ import ru.learn.rpg.GameScreen;
 import ru.learn.rpg.Weapon;
 
 public class Monster extends GameCharacter{
-    private Vector2 direction;
-    private Vector2 temp;
+
     private float moveTimer;
     private float activityRadius;
 
@@ -19,7 +18,10 @@ public class Monster extends GameCharacter{
         this.textureHp = new Texture("Bar.png");
 
         this.gameScreen = gameScreen;
-        this.position = new Vector2(400.0f, 400.0f);
+        this.position = new Vector2(MathUtils.random(0, 1280), MathUtils.random(0,720));
+        while (!gameScreen.getMap().isCellPassable(position)){
+            this.position.set(MathUtils.random(0, 1280), MathUtils.random(0,720));
+        }
         this.direction = new Vector2(0, 0);
         this.temp = new Vector2(0, 0);
         this.activityRadius = 200.0f;
@@ -38,11 +40,10 @@ public class Monster extends GameCharacter{
         }
 
         float dst = gameScreen.getHero().getPosition().dst(this.position);
-        if(gameScreen.getHero().getPosition().dst(this.position) < activityRadius){
-            temp.set(gameScreen.getHero().getPosition()).sub(this.position).nor();
-            position.mulAdd(temp, speed * dt);
+        if(dst < activityRadius){
+            direction.set(gameScreen.getHero().getPosition()).sub(this.position).nor();
+
         } else {
-            position.mulAdd(direction, speed * dt);
             moveTimer -= dt;
             if (moveTimer < 0.0f) {
                 moveTimer = MathUtils.random(1.0f, 4.0f);
@@ -50,6 +51,13 @@ public class Monster extends GameCharacter{
                 direction.nor();
             }
         }
+
+        temp.set(position).mulAdd(direction, speed * dt);
+        if(gameScreen.getMap().isCellPassable(temp)){
+            position.set(temp);
+        }
+
+
         if(dst < weapon.getAttackRadius()){
             attackTimer += dt;
             if(attackTimer >= weapon.getAttackPeriod()){
