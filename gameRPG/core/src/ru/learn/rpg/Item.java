@@ -5,7 +5,8 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Item {
     public enum Type {
-        COINS(0);
+        COINS(0),
+        MEDKIT(1);
 
         int index;
 
