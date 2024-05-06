@@ -4,6 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import ru.learn.rpg.Characters.GameCharacter;
 import ru.learn.rpg.Characters.Hero;
@@ -16,10 +22,18 @@ import java.util.List;
 
 public class GameScreen {
     private SpriteBatch batch;
+    private Stage stage;
     private BitmapFont font24;
     private Map map;
-    private ItemsEmitter emitter;
+    private ItemsEmitter itemEmitter;
+    private TextEmitter textEmitter;
     private Hero hero;
+
+    private float spawnTimer;
+
+//    private Music music;
+//    private Sound sound;
+    private boolean paused;
 
     private List<GameCharacter> allCharacters;
     private List<Monster> allMonsters;
@@ -43,13 +57,17 @@ public class GameScreen {
         return hero;
     }
 
+    public TextEmitter getTextEmitter() {
+        return textEmitter;
+    }
 
     public void create() {
         map = new Map();
         allCharacters = new ArrayList<>();
         allMonsters = new ArrayList<>();
         hero = new Hero(this);
-        emitter = new ItemsEmitter();
+        itemEmitter = new ItemsEmitter();
+        textEmitter = new TextEmitter();
         allCharacters.addAll(Arrays.asList(
                 hero,
                 new Monster(this),
@@ -66,13 +84,51 @@ public class GameScreen {
             }
         }
         font24 = new BitmapFont(Gdx.files.internal("font24.fnt"));
+        stage = new Stage();
 
-        drawOrderComparator = new Comparator<GameCharacter>() {
+        Skin skin = new Skin();
+        skin.add("simpleButton", new Texture("SimpleButton.png"));
+        TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
+        textButtonStyle.up = skin.getDrawable("simpleButton");
+        textButtonStyle.font = font24;
+
+        TextButton pauseButton = new TextButton("Pause", textButtonStyle);
+        TextButton exitButton = new TextButton("Exit", textButtonStyle);
+        pauseButton.addListener(new ClickListener(){
             @Override
-            public int compare(GameCharacter o1, GameCharacter o2) {
-                return (int) (o2.getPosition().y - o1.getPosition().y);
+            public void clicked(InputEvent event, float x, float y) {
+                paused = !paused;
             }
-        };
+        });
+
+        exitButton.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.app.exit();
+            }
+        });
+
+        Group buttonGroup = new Group();
+        buttonGroup.addActor(pauseButton);
+        buttonGroup.addActor(exitButton);
+        exitButton.setPosition(150, 0);
+        buttonGroup.setPosition(980, 680);
+
+        stage.addActor(buttonGroup);
+        Gdx.input.setInputProcessor(stage);
+
+
+        drawOrderComparator = (o1, o2) -> (int) (o2.getPosition().x - o1.getPosition().y);
+
+//        music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+//        music.setLooping(true);
+//        music.setVolume(0.1f);
+//        music.play();
+//
+//        sound = Gdx.audio.newSound(Gdx.files.internal("sound.mp3"));
+//        sound.setVolume(1, 0.1f);
+//        sound.play();
+
     }
 
     public void render() {
@@ -88,35 +144,47 @@ public class GameScreen {
             allCharacters.get(i).render(batch, font24);
         }
 
-        emitter.render(batch);
+        itemEmitter.render(batch);
+        textEmitter.render(batch, font24);
         hero.renderHUD(batch, font24);
         batch.end();
+        stage.draw();
     }
 
 
     public void update(float dt) {
-        for (int i = 0; i < allCharacters.size(); i++) {
-            allCharacters.get(i).update(dt);
-        }
-        for (int i = 0; i < allMonsters.size(); i++) {
-            Monster currentMonster = allMonsters.get(i);
-            if(!currentMonster.isAlive()){
-                allMonsters.remove(currentMonster);
-                allCharacters.remove(currentMonster);
-                emitter.generateRandomItem(currentMonster.getPosition().x, currentMonster.getPosition().y, 5, 0.6f);
-                hero.killMonster(currentMonster);
+        if(!paused) {
+            spawnTimer += dt;
+            if(spawnTimer > 5.0f){
+                Monster monster = new Monster(this);
+                allCharacters.add(monster);
+                allMonsters.add(monster);
+                spawnTimer = 0.0f;
             }
-        }
-        for (int i = 0; i < emitter.getItems().length; i++) {
-            Item it = emitter.getItems()[i];
-            if(it.isActive()){
-                float dst = hero.getPosition().dst(it.getPosition());
-                if(dst < 24.0f){
-                    hero.useItem(it);
+            for (int i = 0; i < allCharacters.size(); i++) {
+                allCharacters.get(i).update(dt);
+            }
+            for (int i = 0; i < allMonsters.size(); i++) {
+                Monster currentMonster = allMonsters.get(i);
+                if (!currentMonster.isAlive()) {
+                    allMonsters.remove(currentMonster);
+                    allCharacters.remove(currentMonster);
+                    itemEmitter.generateRandomItem(currentMonster.getPosition().x, currentMonster.getPosition().y, 5, 0.6f);
+                    hero.killMonster(currentMonster);
                 }
             }
+            for (int i = 0; i < itemEmitter.getItems().length; i++) {
+                Item it = itemEmitter.getItems()[i];
+                if (it.isActive()) {
+                    float dst = hero.getPosition().dst(it.getPosition());
+                    if (dst < 24.0f) {
+                        hero.useItem(it);
+                    }
+                }
+            }
+            textEmitter.update(dt);
+            itemEmitter.update(dt);
         }
-
-        emitter.update(dt);
+        stage.act(dt);
     }
 }

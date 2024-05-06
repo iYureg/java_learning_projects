@@ -2,6 +2,7 @@ package ru.learn.rpg.Characters;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import ru.learn.rpg.GameScreen;
@@ -15,6 +16,8 @@ public class Monster extends GameCharacter{
 
     public Monster(GameScreen gameScreen) {
         this.texture = new Texture("Skeleton.png");
+        this.regions = new TextureRegion(texture).split(80,80)[0];
+
         this.textureHp = new Texture("Bar.png");
 
         this.gameScreen = gameScreen;
@@ -23,7 +26,6 @@ public class Monster extends GameCharacter{
             this.position.set(MathUtils.random(0, 1280), MathUtils.random(0,720));
         }
         this.direction = new Vector2(0, 0);
-        this.temp = new Vector2(0, 0);
         this.activityRadius = 200.0f;
         this.speed = 40.0f;
         this.maxHp = 20;
@@ -35,6 +37,8 @@ public class Monster extends GameCharacter{
     @Override
     public void update(float dt) {
         damageEffectTimer -= dt;
+        animationTimer += dt;
+
         if (damageEffectTimer < 0.0f) {
             damageEffectTimer = 0.0f;
         }
@@ -52,10 +56,7 @@ public class Monster extends GameCharacter{
             }
         }
 
-        temp.set(position).mulAdd(direction, speed * dt);
-        if(gameScreen.getMap().isCellPassable(temp)){
-            position.set(temp);
-        }
+        moveForward(dt);
 
 
         if(dst < weapon.getAttackRadius()){

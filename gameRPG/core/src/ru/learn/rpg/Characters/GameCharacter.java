@@ -3,6 +3,7 @@ package ru.learn.rpg.Characters;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import ru.learn.rpg.GameScreen;
 import ru.learn.rpg.Weapon;
@@ -13,14 +14,19 @@ public abstract class GameCharacter {
     Texture textureHp;
     Vector2 position;
     Vector2 direction;
-    Vector2 temp;
     float speed;
     float hp, maxHp;
 
     float damageEffectTimer;
     float attackTimer;
-
     Weapon weapon;
+
+    Vector2 temp;
+    StringBuilder stringHelper;
+
+    TextureRegion[] regions;
+    float animationTimer;
+    float secondsPerFrame;
 
     public boolean isAlive() {
         return hp > 0.0f;
@@ -31,21 +37,29 @@ public abstract class GameCharacter {
 
     public abstract void update(float dt);
 
+    public GameCharacter(){
+        this.temp = new Vector2(0,0);
+        this.stringHelper = new StringBuilder();
+    }
+
     public void render(SpriteBatch batch, BitmapFont font24) {
         if(damageEffectTimer > 0.0f){
             batch.setColor(1, 1 - damageEffectTimer, 1 - damageEffectTimer, 1);
         }
 
-        batch.draw(texture, position.x - 40, position.y - 40);
+        int frameIndex = (int) (animationTimer / secondsPerFrame) % regions.length;
+        batch.draw(regions[frameIndex], position.x - 40, position.y - 40);
         batch.setColor(1, 1, 1, 1);
 
 
         batch.setColor(0, 0, 0, 1);
-        batch.draw(textureHp, position.x - 42, position.y + 80 - 42, 84, 16);
+        batch.draw(textureHp, position.x - 42, position.y + 80 - 42 + (int) (Math.sin(animationTimer * 10) * 15 * damageEffectTimer), 84, 16);
         batch.setColor(1, 0, 0, 1);
-        batch.draw(textureHp, position.x - 40, position.y + 80 - 40, 0, 0, hp / maxHp * 80, 12, 1, 1, 0, 0, 0, 80, 12, false, false);
+        batch.draw(textureHp, position.x - 40, position.y + 80 - 40 + (int) (Math.sin(animationTimer * 10) * 15 * damageEffectTimer), 0, 0, hp / maxHp * 80, 12, 1, 1, 0, 0, 0, 80, 12, false, false);
         batch.setColor(1, 1, 1, 1);
-        font24.draw(batch, String.valueOf((int) hp), position.x - 40, position.y + 80 - 22, 80,1,false);
+        stringHelper.setLength(0);
+        stringHelper.append((int) hp);
+        font24.draw(batch, stringHelper, position.x - 40, position.y + 80 - 22 + (int) (Math.sin(animationTimer * 10) * 15 * damageEffectTimer), 80,1,false);
     }
 
     public void checkScreenBounds(){
@@ -68,6 +82,16 @@ public abstract class GameCharacter {
         damageEffectTimer += 0.5f;
         if(damageEffectTimer > 1.0f){
             damageEffectTimer = 1.0f;
+        }
+    }
+
+    public void moveForward(float dt){
+        if(gameScreen.getMap().isCellPassable(temp.set(position).mulAdd(direction, speed * dt))){
+            position.set(temp);
+        } else if (gameScreen.getMap().isCellPassable(temp.set(position).mulAdd(direction, speed * dt).set(temp.x, position.y))) {
+            position.set(temp);
+        } else if (gameScreen.getMap().isCellPassable(temp.set(position).mulAdd(direction, speed * dt).set(position.x, temp.y))) {
+            position.set(temp);
         }
     }
 }
